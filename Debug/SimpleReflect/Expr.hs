@@ -19,6 +19,7 @@ module Debug.SimpleReflect.Expr
     , var, fun, Associativity(..), op
       -- * Evaluating
     , expr, reduce, reduction
+    , emptyExpr
     ) where
 
 import Data.List
@@ -45,11 +46,12 @@ instance Show Expr where
 
 -- | Default expression
 emptyExpr :: Expr
-emptyExpr = Expr { showExpr   = \_ -> showString ""
-                 , intExpr    = Nothing
-                 , doubleExpr = Nothing
-                 , reduced    = Nothing
-                 }
+emptyExpr = Expr
+  { showExpr   = \_ -> showString ""
+  , intExpr    = Nothing
+  , doubleExpr = Nothing
+  , reduced    = Nothing
+  }
 
 ------------------------------------------------------------------------------
 -- Lifting and combining expressions
