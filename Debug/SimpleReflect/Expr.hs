@@ -14,7 +14,7 @@
 -----------------------------------------------------------------------------
 module Debug.SimpleReflect.Expr
     ( -- * Construction
-      Expr
+      Expr(..)
     , FromExpr(..)
     , var, fun, Associativity(..), op
       -- * Evaluating
@@ -42,7 +42,7 @@ data Expr = Expr
    }
 
 instance Show Expr where
-    showsPrec p r = showExpr r p
+  showsPrec p r = showExpr r p
 
 -- | Default expression
 emptyExpr :: Expr
