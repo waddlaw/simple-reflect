@@ -19,7 +19,7 @@ module Debug.SimpleReflect.Expr
     , var, fun, Associativity(..), op
       -- * Evaluating
     , expr, reduce, reduction
-    , emptyExpr
+    , emptyExpr, lift
     ) where
 
 import Data.List
