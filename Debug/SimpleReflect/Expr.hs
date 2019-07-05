@@ -70,10 +70,11 @@ data Associativity = InfixL | Infix | InfixR deriving Eq
 -- | An infix operator with the given associativity, precedence and name
 op :: Associativity -> Int -> String -> Expr -> Expr -> Expr
 op fix prec opName a b = emptyExpr { showExpr = showFun }
- where showFun p = showParen (p > prec)
-                     $ showExpr a (if fix == InfixL then prec else prec + 1)
-                     . showString opName
-                     . showExpr b (if fix == InfixR then prec else prec + 1)
+  where
+    showFun p = showParen (p > prec)
+              $ showExpr a (if fix == InfixL then prec else prec + 1)
+              . showString opName
+              . showExpr b (if fix == InfixR then prec else prec + 1)
 
 ------------------------------------------------------------------------------
 -- Adding numeric results
