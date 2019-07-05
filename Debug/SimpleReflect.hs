@@ -30,7 +30,9 @@
 module Debug.SimpleReflect
     ( module Debug.SimpleReflect.Expr
     , module Debug.SimpleReflect.Vars
+    , module Debug.SimpleReflect.Prelude
     ) where
 
 import Debug.SimpleReflect.Expr
 import Debug.SimpleReflect.Vars
+import Debug.SimpleReflect.Prelude

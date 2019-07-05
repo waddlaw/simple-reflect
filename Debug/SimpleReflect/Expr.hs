@@ -19,7 +19,8 @@ module Debug.SimpleReflect.Expr
     , var, fun, Associativity(..), op
       -- * Evaluating
     , expr, reduce, reduction
-    , emptyExpr, lift
+    , emptyExpr, lift, withReduce, withReduce2
+    , bOp, bOp2, fromBool
     ) where
 
 import Data.List
@@ -38,6 +39,7 @@ data Expr = Expr
    { showExpr   :: Int -> ShowS  -- ^ Show with the given precedence level
    , intExpr    :: Maybe Integer -- ^ Integer value?
    , doubleExpr :: Maybe Double  -- ^ Floating value?
+   , boolExpr   :: Maybe Bool
    , reduced    :: Maybe Expr    -- ^ Next reduction step
    }
 
@@ -50,6 +52,7 @@ emptyExpr = Expr
   { showExpr   = \_ -> showString ""
   , intExpr    = Nothing
   , doubleExpr = Nothing
+  , boolExpr   = Nothing
   , reduced    = Nothing
   }
 
@@ -80,21 +83,26 @@ op fix prec opName a b = emptyExpr { showExpr = showFun }
 -- Adding numeric results
 ------------------------------------------------------------------------------
 
-iOp :: (Expr -> Expr) -> (Integer -> Integer) -> Expr -> Expr
-iOp2 :: (Expr -> Expr -> Expr) -> (Integer -> Integer -> Integer) -> Expr -> Expr -> Expr
-dOp :: (Expr -> Expr) -> (Double -> Double) -> Expr -> Expr
-dOp2 :: (Expr -> Expr -> Expr) -> (Double -> Double -> Double) -> Expr -> Expr -> Expr
+iOp  :: (Expr -> Expr) -> (Integer -> Integer) -> Expr -> Expr
+dOp  :: (Expr -> Expr) -> (Double -> Double)   -> Expr -> Expr
+bOp  :: (Expr -> Expr) -> (Bool -> Bool) -> Expr -> Expr
+iOp r f a = (r a) { intExpr    = f <$> intExpr    a }
+dOp r f a = (r a) { doubleExpr = f <$> doubleExpr a }
+bOp r f a = (r a) { boolExpr   = f <$> boolExpr   a }
 
-iOp  r f a   = (r a  ) { intExpr    = f <$> intExpr    a }
+iOp2 :: (Expr -> Expr -> Expr) -> (Integer -> Integer -> Integer) -> Expr -> Expr -> Expr
+dOp2 :: (Expr -> Expr -> Expr) -> (Double  -> Double  -> Double)  -> Expr -> Expr -> Expr
+bOp2 :: (Expr -> Expr -> Expr) -> (Bool    -> Bool    -> Bool)    -> Expr -> Expr -> Expr
 iOp2 r f a b = (r a b) { intExpr    = f <$> intExpr    a <*> intExpr    b }
-dOp  r f a   = (r a  ) { doubleExpr = f <$> doubleExpr a }
 dOp2 r f a b = (r a b) { doubleExpr = f <$> doubleExpr a <*> doubleExpr b }
+bOp2 r f a b = (r a b) { boolExpr   = f <$> boolExpr   a <*> boolExpr   b }
 
 withReduce :: (Expr -> Expr) -> (Expr -> Expr)
-withReduce r a    = let rr = r a in
+withReduce r a = let rr = r a in
                     rr { reduced = withReduce r <$> reduced a
-                               <|> fromInteger <$> intExpr    rr
-                               <|> fromDouble  <$> doubleExpr rr
+                               <|> fromInteger  <$> intExpr    rr
+                               <|> fromDouble   <$> doubleExpr rr
+                               <|> fromBool     <$> boolExpr   rr
                        }
 withReduce2 :: (Expr -> Expr -> Expr) -> (Expr -> Expr -> Expr)
 withReduce2 r a b = let rr = r a b in
@@ -102,6 +110,7 @@ withReduce2 r a b = let rr = r a b in
                                <|> (\b' -> withReduce2 r a b') <$> reduced b
                                <|> fromInteger <$> intExpr    rr
                                <|> fromDouble  <$> doubleExpr rr
+                               <|> fromBool    <$> boolExpr   rr
                        }
 
 ------------------------------------------------------------------------------
@@ -145,14 +154,16 @@ reduction e0 = e0 : unfoldr (\e -> do e' <- reduced e; return (e',e')) e0
 ------------------------------------------------------------------------------
 
 instance Eq Expr where
-    Expr{ intExpr    = Just a } == Expr{ intExpr    = Just b }  =  a == b
-    Expr{ doubleExpr = Just a } == Expr{ doubleExpr = Just b }  =  a == b
-    a                           == b                            =  show a == show b
+    Expr { intExpr    = Just a } == Expr { intExpr    = Just b } = a == b
+    Expr { doubleExpr = Just a } == Expr { doubleExpr = Just b } = a == b
+    Expr { boolExpr   = Just a } == Expr { boolExpr   = Just b } = a == b
+    a                            == b                            = show a == show b
 
 instance Ord Expr where
-    compare Expr{ intExpr    = Just a } Expr{ intExpr    = Just b }  =  compare a b
-    compare Expr{ doubleExpr = Just a } Expr{ doubleExpr = Just b }  =  compare a b
-    compare a                           b                            =  compare (show a) (show b)
+    compare Expr { intExpr    = Just a } Expr { intExpr    = Just b } = compare a b
+    compare Expr { doubleExpr = Just a } Expr { doubleExpr = Just b } = compare a b
+    compare Expr { boolExpr   = Just a } Expr { boolExpr   = Just b } = compare a b
+    compare a                            b                            = compare (show a) (show b)
     min = fun "min" `iOp2` min `dOp2` min
     max = fun "max" `iOp2` max `dOp2` max
 
@@ -191,6 +202,9 @@ instance Fractional Expr where
 
 fromDouble :: Double -> Expr
 fromDouble d = (lift d) { doubleExpr = Just d }
+
+fromBool :: Bool -> Expr
+fromBool b = (lift b) { boolExpr = Just b }
 
 instance Floating Expr where
     pi    = (var "pi") { doubleExpr = Just pi }

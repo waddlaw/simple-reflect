@@ -7,7 +7,7 @@ author:              Twan van Laarhoven
 maintainer:          twanvl@gmail.com
 bug-reports:         https://github.com/twanvl/simple-reflect/issues
 category:            Debug
-cabal-version:       >= 1.6
+cabal-version:       >= 1.18
 build-type:          Simple
 synopsis:            Simple reflection of expressions containing variables
 description:
@@ -26,4 +26,16 @@ Library
     exposed-modules:
         Debug.SimpleReflect
         Debug.SimpleReflect.Expr
+        Debug.SimpleReflect.Prelude
+        Debug.SimpleReflect.Prelude.Bool
+        Debug.SimpleReflect.Prelude.Eq
+        Debug.SimpleReflect.Prelude.Num
         Debug.SimpleReflect.Vars
+    default-language:   Haskell2010
+
+executable ch01
+  main-is:            Chapter01.hs
+  hs-source-dirs:     examples
+  build-depends:      base
+                    , simple-reflect
+  default-language:   Haskell2010
